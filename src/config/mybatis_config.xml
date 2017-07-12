@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+ 
+http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+http://www.springframework.org/schema/context
+http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+	<!-- 注解注入 -->
+	<context:component-scan base-package="com.neu.action" />
+	<context:component-scan base-package="com.neu.service" />
+	<context:component-scan base-package="com.neu.mapper" />
+	<bean
+		class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping" />
+	<bean
+		class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter" />
+	<!-- 配置视图解析器 -->
+
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/" />
+		<property name="suffix" value=".jsp" />
+	</bean>
+	<!-- 配置mybatis：配置SqlSessionFactory -->
+
+	<bean id="dataSource"
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+
+		<property name="driverClassName" value="com.mysql.jdbc.Driver" />
+		<property name="url" value="jdbc:mysql://localhost:3306/login?useUnicode=true&amp;characterEncoding=utf8"/>
+		<property name="username" value="root" />
+		<property name="password" value="root" />
+	</bean>
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="configLocation" value="classpath:config/spring_servlet.xml"></property>
+	</bean>
+
+	<!-- 通过注入sqlsessionFactory的方式来获取一个SqlsessionTemplate <bean id="sqlSessionTemplate" 
+		class="org.mybatis.spring.SqlSessionTemplate"> //通过构造函数注入 <constructor-arg 
+		index="0" ref="sqlSessionFactory" /> </bean> -->
+
+	<!-- Spring和MyBatis整合:配置扫描Dao接口的包，动态实现Dao接口，注入到Spring容器中 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<!-- 给出需要扫描的Dao接口包 ，set注入 -->
+		<property name="basePackage" value="com.neu.mapper" />
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+	</bean>
+	<!-- 4. 事务管理 : DataSourceTransactionManager dataSource:引用上面定义的数据源 <bean 
+		id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager"> 
+		<property name="dataSource" ref="dataSource"></property> </bean> -->
+	<!-- 5. 使用声明式事务 transaction-manager：引用上面定义的事务管理器 <tx:annotation-driven transaction-manager="txManager" 
+		/> -->
+	<!-- 事务管理器配置 <bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager"> 
+		<property name="dataSource" ref="dataSource" /> </bean> <tx:advice id="txAdvice" 
+		transaction-manager="txManager"> <tx:attributes> <tx:method name="get*" read-only="true" 
+		/> <tx:method name="*" /> </tx:attributes> </tx:advice> -->
+	<!--把事务控制在Service层 <aop:config> <aop:pointcut id="serviceOperation" expression="execution(* 
+		service.*.*(..))" /> <aop:advisor advice-ref="txAdvice" pointcut-ref="serviceOperation" 
+		/> </aop:config> -->
+
+	<!-- <mvc:view-controller path="/index.do" view-name="index" /> <mvc:interceptors> 
+		<mvc:interceptor> <mvc:mapping path="/userAdd.do" /> <bean class="interceptor.LoginInterceptor" 
+		/> </mvc:interceptor> </mvc:interceptors> -->
+
+</beans>
